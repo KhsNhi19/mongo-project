@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Lấy các phần tử DOM ---
   const views = document.querySelectorAll(".view");
   const navLinks = document.querySelectorAll(".sidebar-nav li");
+  const sidebar = document.querySelector(".sidebar");
   const categorySelect = document.getElementById("category-select");
   const searchBtn = document.getElementById("search-btn");
   const resultsContainer = document.getElementById("results-container");
@@ -17,6 +18,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const detailsPhotos = document.getElementById("details-photos");
   const detailsReviews = document.getElementById("details-reviews");
   const detailsTips = document.getElementById("details-tips");
+  const detailsTipsPagination = document.getElementById(
+    "details-tips-pagination"
+  );
   const reviewSearchInput = document.getElementById("review-search-input");
   const reviewSearchBtn = document.getElementById("review-search-btn");
   const reviewResultsContainer = document.getElementById(
@@ -36,6 +40,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- QUẢN LÝ CÁC MÀN HÌNH (VIEW) ---
   function showView(viewId) {
+    if (viewId !== "view-business-details") {
+      sidebar.classList.remove("collapsed");
+    }
     views.forEach((view) => view.classList.add("hidden"));
     document.getElementById(viewId).classList.remove("hidden");
     navLinks.forEach((link) => {
@@ -117,23 +124,21 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- CHỨC NĂNG 2: HIỂN THỊ CHI TIẾT BUSINESS ---
   async function showBusinessDetails(businessId, businessName) {
     showView("view-business-details");
+    sidebar.classList.add("collapsed");
     detailsBusinessName.textContent = businessName;
-    detailsPhotos.innerHTML = "<p>Đang tải ảnh...</p>";
-    detailsReviews.innerHTML = "<p>Đang tải reviews...</p>";
-    detailsTips.innerHTML = "<p>Đang tải tips...</p>";
+
+    detailsPhotos.innerHTML = '<p class="loading-text">Đang tải ảnh...</p>';
+    detailsReviews.innerHTML =
+      '<p class="loading-text">Đang tải reviews...</p>';
+    detailsTips.innerHTML = '<p class="loading-text">Đang tải tips...</p>';
+    detailsTipsPagination.innerHTML = "";
+
     try {
-      const businessDetails = await fetchAPI(`/api/businesses/${businessId}`);
-      renderBusinessInfo(businessDetails);
-      const [photos, reviews, tips, checkins] = await Promise.all([
-        fetchAPI(`/api/businesses/${businessId}/photos`),
-        fetchAPI(`/api/businesses/${businessId}/reviews`),
-        fetchAPI(`/api/businesses/${businessId}/tips`),
-        fetchAPI(`/api/businesses/${businessId}/checkins`),
-      ]);
-      renderPhotos(photos);
-      renderReviews(reviews);
-      renderTips(tips);
-      renderCheckins(checkins);
+      fetchAPI(`/api/businesses/${businessId}`).then(renderBusinessInfo);
+      fetchAPI(`/api/businesses/${businessId}/photos`).then(renderPhotos);
+      fetchAPI(`/api/businesses/${businessId}/reviews`).then(renderReviews);
+      fetchAPI(`/api/businesses/${businessId}/checkins`).then(renderCheckins);
+      fetchAndRenderTips(businessId, 1);
     } catch (error) {
       console.error("Lỗi khi tải chi tiết business:", error);
     }
@@ -197,9 +202,52 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  async function fetchAndRenderTips(businessId, page = 1) {
+    try {
+      const data = await fetchAPI(
+        `/api/businesses/${businessId}/tips?page=${page}`
+      );
+      renderTips(data.tips);
+      renderTipsPagination(businessId, data.total, data.page, data.limit);
+    } catch (error) {
+      detailsTips.innerHTML = "<p>Lỗi tải tips.</p>";
+      detailsTipsPagination.innerHTML = "";
+    }
+  }
+
+  function renderTipsPagination(businessId, total, page, limit) {
+    detailsTipsPagination.innerHTML = "";
+    const totalPages = Math.ceil(total / limit);
+    if (totalPages <= 1) return;
+
+    const prevButton = document.createElement("button");
+    prevButton.innerHTML = "&laquo; Trước";
+    prevButton.disabled = page === 1;
+    prevButton.addEventListener("click", () =>
+      fetchAndRenderTips(businessId, page - 1)
+    );
+
+    const pageInfo = document.createElement("span");
+    pageInfo.textContent = `Trang ${page} / ${totalPages}`;
+
+    const nextButton = document.createElement("button");
+    nextButton.innerHTML = "Sau &raquo;";
+    nextButton.disabled = page === totalPages;
+    nextButton.addEventListener("click", () =>
+      fetchAndRenderTips(businessId, page + 1)
+    );
+
+    detailsTipsPagination.append(prevButton, pageInfo, nextButton);
+  }
+
   function renderCheckins(checkins) {
     if (checkinsChart) {
       checkinsChart.destroy();
+    }
+    const canvas = document.getElementById("checkins-chart");
+    if (!canvas) {
+      console.error('Không tìm thấy phần tử canvas có id="checkins-chart"');
+      return;
     }
     const labels = [
       "Chủ Nhật",
@@ -211,10 +259,12 @@ document.addEventListener("DOMContentLoaded", () => {
       "Thứ 7",
     ];
     const data = Array(7).fill(0);
-    checkins.forEach((item) => {
-      data[item._id - 1] = item.checkinCount;
-    });
-    const ctx = document.getElementById("checkins-chart").getContext("2d");
+    if (checkins && checkins.length > 0) {
+      checkins.forEach((item) => {
+        data[item._id - 1] = item.checkinCount;
+      });
+    }
+    const ctx = canvas.getContext("2d");
     checkinsChart = new Chart(ctx, {
       type: "bar",
       data: {
@@ -229,7 +279,7 @@ document.addEventListener("DOMContentLoaded", () => {
           },
         ],
       },
-      options: { scales: { y: { beginAtZero: true } } },
+      options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } },
     });
   }
 
@@ -270,19 +320,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- CHỨC NĂNG 4: TÌM GẦN ĐÂY ---
   function initializeNearbyMap() {
     if (isNearbyMapInitialized) return;
-
-    const nearbyMapContainer = document.getElementById("nearby-map");
-    const nearbyResultsContainer = document.getElementById(
-      "nearby-results-container"
-    );
-
-    const PhiladelphiaCoords = [39.9526, -75.1652];
-
-    nearbyMap = L.map(nearbyMapContainer).setView(PhiladelphiaCoords, 12); // Zoom gần hơn một chút
+    const PhiladelphiaCoords = [39.953, -75.164];
+    nearbyMap = L.map(nearbyMapContainer).setView(PhiladelphiaCoords, 12);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(nearbyMap);
-
     nearbyMap.on("click", async function (e) {
       const { lat, lng } = e.latlng;
       nearbyResultsContainer.innerHTML = "<h2>Đang tìm các địa điểm...</h2>";
@@ -290,14 +332,41 @@ document.addEventListener("DOMContentLoaded", () => {
         const businesses = await fetchAPI(
           `/api/businesses/nearby?lat=${lat}&lon=${lng}`
         );
-        renderBusinessResults(businesses, nearbyResultsContainer); // Dùng lại hàm render đã sửa
+        renderBusinessResults(businesses, nearbyResultsContainer);
       } catch (error) {
         nearbyResultsContainer.innerHTML =
           "<h2>Không tìm thấy địa điểm nào.</h2>";
       }
     });
-
     isNearbyMapInitialized = true;
+  }
+
+  function findNearbyWithButton() {
+    nearbyResultsContainer.innerHTML =
+      "<h2>Đang xác định vị trí của bạn...</h2>";
+    if (!navigator.geolocation) {
+      nearbyResultsContainer.innerHTML =
+        "<h2>Trình duyệt của bạn không hỗ trợ định vị.</h2>";
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const businesses = await fetchAPI(
+            `/api/businesses/nearby?lat=${latitude}&lon=${longitude}`
+          );
+          renderBusinessResults(businesses, nearbyResultsContainer);
+        } catch (error) {
+          nearbyResultsContainer.innerHTML =
+            "<h2>Không tìm thấy địa điểm nào gần bạn.</h2>";
+        }
+      },
+      () => {
+        nearbyResultsContainer.innerHTML =
+          "<h2>Không thể lấy vị trí của bạn. Vui lòng cho phép truy cập vị trí.</h2>";
+      }
+    );
   }
 
   function renderBusinessResults(businesses, container) {
@@ -309,9 +378,7 @@ document.addEventListener("DOMContentLoaded", () => {
     businesses.forEach((business) => {
       const card = document.createElement("div");
       card.className = "business-card";
-
       const businessId = business.business_id;
-
       let cardContent = `<h3>${business.name}</h3>`;
       if (business.city)
         cardContent += `<p><strong>Thành phố:</strong> ${business.city}</p>`;
@@ -323,15 +390,12 @@ document.addEventListener("DOMContentLoaded", () => {
         cardContent += `<p><strong>Số review:</strong> ${business.review_count}</p>`;
       if (business.distance_km !== undefined)
         cardContent += `<p><strong>Khoảng cách:</strong> ${business.distance_km} km</p>`;
-
       card.innerHTML = cardContent;
-
       if (businessId) {
         card.addEventListener("click", () =>
           showBusinessDetails(businessId, business.name)
         );
       }
-
       container.appendChild(card);
     });
   }
@@ -340,6 +404,7 @@ document.addEventListener("DOMContentLoaded", () => {
   searchBtn.addEventListener("click", () => searchBusinesses(1));
   backBtn.addEventListener("click", () => showView("view-search-business"));
   reviewSearchBtn.addEventListener("click", searchInReviews);
+  findNearbyBtn.addEventListener("click", findNearbyWithButton);
 
   navLinks.forEach((link) => {
     link.addEventListener("click", (e) => {

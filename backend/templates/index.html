@@ -15,24 +15,31 @@
     <div class="app-container">
       <aside class="sidebar">
         <div class="sidebar-header">
-          <h3>Explorer</h3>
+          <h3>Khám phá</h3>
         </div>
         <nav class="sidebar-nav">
           <ul>
             <li class="active" data-view="view-search-business">
-              <a href="#"><i class="fas fa-store"></i> Tìm Doanh nghiệp</a>
+              <a href="#"
+                ><i class="fas fa-store"></i> <span>Tìm Doanh nghiệp</span></a
+              >
             </li>
             <li data-view="view-search-reviews">
               <a href="#"
-                ><i class="fas fa-pen-to-square"></i> Tìm trong Review</a
+                ><i class="fas fa-pen-to-square"></i>
+                <span>Tìm trong Review</span></a
               >
             </li>
             <li data-view="view-nearby">
-              <a href="#"><i class="fas fa-map-marker-alt"></i> Tìm Gần Đây</a>
+              <a href="#"
+                ><i class="fas fa-map-marker-alt"></i>
+                <span>Tìm Gần Đây</span></a
+              >
             </li>
           </ul>
         </nav>
       </aside>
+
       <main class="main-content">
         <div id="view-search-business" class="view">
           <header class="main-header">
@@ -88,6 +95,10 @@
             <div id="details-reviews"></div>
             <h2><i class="fas fa-lightbulb"></i> Tips & Gợi ý</h2>
             <div id="details-tips"></div>
+            <div
+              id="details-tips-pagination"
+              class="pagination-container"
+            ></div>
             <h2><i class="fas fa-chart-bar"></i> Lượt Check-in theo ngày</h2>
             <div id="details-checkins" style="max-width: 600px">
               <canvas id="checkins-chart"></canvas>
@@ -113,6 +124,7 @@
           </div>
           <div id="review-results-container" class="results-container"></div>
         </div>
+
         <div id="view-nearby" class="view hidden">
           <header class="main-header">
             <h1>Tìm Doanh nghiệp trên Bản đồ</h1>
@@ -122,6 +134,10 @@
               Click vào một điểm bất kỳ trên bản đồ để tìm các doanh nghiệp
               trong bán kính 5km.
             </p>
+            <button id="find-nearby-btn" class="find-nearby-button">
+              <i class="fas fa-location-arrow"></i> Hoặc tìm gần vị trí hiện tại
+              của tôi
+            </button>
           </div>
           <div id="nearby-map" class="interactive-map"></div>
           <div

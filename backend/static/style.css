@@ -244,3 +244,25 @@ body {
   border-radius: 8px;
   border: 1px solid #ccc;
 }
+
+/* Thêm hiệu ứng co giãn mượt mà cho sidebar */
+.sidebar {
+  /* ... các thuộc tính cũ giữ nguyên ... */
+  transition: width 0.3s ease-in-out;
+}
+
+/* Đây là trạng thái khi sidebar bị thu nhỏ */
+.sidebar.collapsed {
+  width: 80px; /* Chiều rộng mới khi thu nhỏ */
+}
+
+/* Ẩn chữ đi khi sidebar thu nhỏ */
+.sidebar.collapsed .sidebar-header h3,
+.sidebar.collapsed .sidebar-nav li a span {
+  display: none;
+}
+
+/* Căn giữa icon khi sidebar thu nhỏ */
+.sidebar.collapsed .sidebar-nav li a i {
+  margin-right: 0;
+}
