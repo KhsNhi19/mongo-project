@@ -2,7 +2,7 @@
 
 Dự án này là một ứng dụng web full-stack (Flask + JavaScript) cho phép khám phá và phân tích bộ dữ liệu của Yelp một cách trực quan. Toàn bộ môi trường, từ database MongoDB đến backend Python, đều được đóng gói bằng Docker để đảm bảo việc cài đặt và chạy ứng dụng trở nên đơn giản và nhất quán.
 
-## ✨ Các tính năng chính
+## Các tính năng chính
 
 - **Tìm kiếm Doanh nghiệp:** Lọc các doanh nghiệp theo danh mục với hệ thống phân trang (pagination) hiệu quả.
 - **Xem chi tiết:** Xem thông tin đầy đủ của từng doanh nghiệp, bao gồm địa chỉ, hình ảnh, review, tips và vị trí trên bản đồ.
@@ -10,14 +10,14 @@ Dự án này là một ứng dụng web full-stack (Flask + JavaScript) cho ph�
 - **Tìm kiếm toàn văn bản (Full-text Search):** Tìm kiếm từ khóa bất kỳ bên trong nội dung của hàng triệu review.
 - **Trực quan hóa Dữ liệu:** Xem thống kê lượt check-in theo ngày trong tuần qua biểu đồ.
 
-## 🛠️ Công nghệ sử dụng
+## Công nghệ sử dụng
 
 - **Backend:** Flask, PyMongo
 - **Frontend:** HTML, CSS, JavaScript (Vanilla), Leaflet.js (Bản đồ), Chart.js (Biểu đồ)
 - **Database:** MongoDB
 - **DevOps:** Docker, Docker Compose
 
-## 🚀 Cài đặt & Khởi chạy
+## Cài đặt & Khởi chạy
 
 Hãy làm theo các bước sau để chạy toàn bộ ứng dụng trên máy của bạn.
 
