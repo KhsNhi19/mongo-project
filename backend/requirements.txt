@@ -1,5 +1,3 @@
 Flask
 Flask-PyMongo
 flask-cors
-pymongo
-bson

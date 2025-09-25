@@ -1,0 +1,25 @@
+# Môi trường ảo Python
+venv/
+backend/venv/
+
+# Cache của Python
+__pycache__/
+backend/__pycache__/
+*.pyc
+
+# Các file hệ thống của macOS
+.DS_Store
+
+# Các file hệ thống của Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Các file cấu hình của IDE/Editor
+.vscode/
+.idea/
+
+# Các file backup dữ liệu lớn
+*.gz
+*.zip
+*.tar
