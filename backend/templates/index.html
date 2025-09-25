@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yelp Data Explorer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="/static/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div class="app-container">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h3>Explorer</h3>
+        </div>
+        <nav class="sidebar-nav">
+          <ul>
+            <li class="active" data-view="view-search-business">
+              <a href="#"><i class="fas fa-store"></i> Tìm Doanh nghiệp</a>
+            </li>
+            <li data-view="view-search-reviews">
+              <a href="#"
+                ><i class="fas fa-pen-to-square"></i> Tìm trong Review</a
+              >
+            </li>
+            <li data-view="view-nearby">
+              <a href="#"><i class="fas fa-map-marker-alt"></i> Tìm Gần Đây</a>
+            </li>
+          </ul>
+        </nav>
+      </aside>
+      <main class="main-content">
+        <div id="view-search-business" class="view">
+          <header class="main-header">
+            <h1>Tìm kiếm Doanh nghiệp theo Danh mục</h1>
+          </header>
+          <div class="search-container">
+            <div class="search-form">
+              <label for="category-select">Chọn Danh mục:</label>
+              <select id="category-select"></select>
+              <button id="search-btn">
+                <i class="fas fa-search"></i> Tìm kiếm
+              </button>
+            </div>
+          </div>
+          <div id="results-container" class="results-container"></div>
+          <div id="pagination-container" class="pagination-container"></div>
+        </div>
+
+        <div id="view-business-details" class="view hidden">
+          <header class="main-header">
+            <button id="back-btn">
+              <i class="fas fa-arrow-left"></i> Quay lại
+            </button>
+            <h1 id="details-business-name">Tên Business</h1>
+          </header>
+          <div id="details-content">
+            <div class="details-grid">
+              <div class="details-info">
+                <h3><i class="fas fa-info-circle"></i> Thông tin</h3>
+                <p>
+                  <strong>Địa chỉ:</strong> <span id="details-address"></span>
+                </p>
+                <p>
+                  <strong>Thành phố:</strong> <span id="details-city"></span>
+                </p>
+                <p>
+                  <strong>Hạng mục:</strong>
+                  <span id="details-categories"></span>
+                </p>
+                <p>
+                  <strong>Điểm sao:</strong> <span id="details-stars"></span>
+                </p>
+                <p>
+                  <strong>Số đánh giá:</strong>
+                  <span id="details-review-count"></span>
+                </p>
+              </div>
+              <div id="details-map" class="details-map"></div>
+            </div>
+            <h2><i class="fas fa-images"></i> Hình ảnh</h2>
+            <div id="details-photos" class="photo-gallery"></div>
+            <h2><i class="fas fa-star"></i> Reviews Mới Nhất</h2>
+            <div id="details-reviews"></div>
+            <h2><i class="fas fa-lightbulb"></i> Tips & Gợi ý</h2>
+            <div id="details-tips"></div>
+            <h2><i class="fas fa-chart-bar"></i> Lượt Check-in theo ngày</h2>
+            <div id="details-checkins" style="max-width: 600px">
+              <canvas id="checkins-chart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-search-reviews" class="view hidden">
+          <header class="main-header">
+            <h1>Tìm kiếm trong nội dung Review</h1>
+          </header>
+          <div class="search-container">
+            <div class="search-form">
+              <input
+                type="text"
+                id="review-search-input"
+                placeholder="Nhập từ khóa, ví dụ: clean, amazing nails..."
+              />
+              <button id="review-search-btn">
+                <i class="fas fa-search"></i> Tìm
+              </button>
+            </div>
+          </div>
+          <div id="review-results-container" class="results-container"></div>
+        </div>
+        <div id="view-nearby" class="view hidden">
+          <header class="main-header">
+            <h1>Tìm Doanh nghiệp trên Bản đồ</h1>
+          </header>
+          <div class="search-container">
+            <p>
+              Click vào một điểm bất kỳ trên bản đồ để tìm các doanh nghiệp
+              trong bán kính 5km.
+            </p>
+          </div>
+          <div id="nearby-map" class="interactive-map"></div>
+          <div
+            id="nearby-results-container"
+            class="results-container"
+            style="margin-top: 20px"
+          ></div>
+        </div>
+      </main>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,246 @@
+/* --- Cài đặt chung --- */
+:root {
+  --primary-color: #007bff;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  margin: 0;
+  background-color: #f4f6f8;
+  color: #333;
+}
+.app-container {
+  display: flex;
+  height: 100vh;
+}
+.hidden {
+  display: none !important;
+}
+
+/* --- Sidebar --- */
+.sidebar {
+  width: 240px;
+  background-color: #ffffff;
+  border-right: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+}
+.sidebar-header {
+  padding: 0 20px 20px 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 20px;
+}
+.sidebar-nav ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 20px 0 0 0;
+}
+.sidebar-nav li a {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  text-decoration: none;
+  color: #555;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+}
+.sidebar-nav li a:hover {
+  background-color: #f0f0f0;
+  color: var(--primary-color);
+}
+.sidebar-nav li.active a {
+  background-color: #e9f5ff;
+  color: var(--primary-color);
+  border-right: 3px solid var(--primary-color);
+}
+.sidebar-nav li a i {
+  margin-right: 15px;
+  width: 20px;
+  text-align: center;
+}
+
+/* --- Main Content --- */
+.main-content {
+  flex-grow: 1;
+  padding: 30px;
+  overflow-y: auto;
+}
+.main-header {
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.main-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+}
+.search-container {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 30px;
+}
+.search-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.search-form label {
+  font-weight: 500;
+}
+.search-form input,
+.search-form select {
+  flex-grow: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+.search-form button,
+#back-btn {
+  padding: 10px 20px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.search-form button:hover,
+#back-btn:hover {
+  background-color: #0056b3;
+}
+.search-form button i,
+#back-btn i {
+  margin-right: 5px;
+}
+
+/* --- Results --- */
+.results-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+.business-card {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s;
+  cursor: pointer;
+}
+.business-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+.business-card h3 {
+  margin-top: 0;
+  color: var(--primary-color);
+}
+
+/* --- Details View --- */
+#details-content h2 {
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+  margin-top: 40px;
+}
+.photo-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+}
+.photo-gallery img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+.review-card {
+  background-color: #fdfdfd;
+  border: 1px solid #eee;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+.review-card p {
+  margin: 5px 0;
+}
+.review-card .review-meta {
+  font-size: 0.9em;
+  color: #777;
+}
+
+/* Map */
+.find-nearby-button {
+  font-size: 16px;
+  padding: 12px 24px;
+}
+
+/* style.css */
+
+/* --- Pagination --- */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 30px;
+  gap: 10px;
+}
+.pagination-container button {
+  padding: 8px 16px;
+  background-color: #fff;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+.pagination-container button:hover {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+.pagination-container button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.pagination-container span {
+  font-weight: 500;
+}
+
+/* --- Details View Enhancements --- */
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-bottom: 30px;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.details-map {
+  height: 300px;
+  border-radius: 8px;
+}
+.details-info h3 {
+  margin-top: 0;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+}
+
+/* --- Nearby Map --- */
+.interactive-map {
+  height: 400px;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
