@@ -31,12 +31,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const nearbyResultsContainer = document.getElementById(
     "nearby-results-container"
   );
+  const runAnalysisBtn = document.getElementById("run-analysis-btn");
+  const refTimeEl = document.getElementById("ref-time");
+  const embTimeEl = document.getElementById("emb-time");
 
   // --- Biến toàn cục ---
   let detailsMap, nearbyMap, checkinsChart;
   let currentPage = 1;
   let currentCategory = "Restaurants";
   let isNearbyMapInitialized = false;
+  let selectedBusinessForAnalysis = null;
 
   // --- QUẢN LÝ CÁC MÀN HÌNH (VIEW) ---
   function showView(viewId) {
@@ -66,6 +70,41 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error(`Lỗi khi gọi API ${url}:`, error);
       throw error;
     }
+  }
+
+  // --- HÀM RENDER CHUNG ---
+  function renderBusinessResults(businesses, container) {
+    container.innerHTML = "";
+    if (!businesses || businesses.length === 0) {
+      container.innerHTML = "<h2>Không tìm thấy kết quả nào.</h2>";
+      return;
+    }
+    businesses.forEach((business) => {
+      const card = document.createElement("div");
+      card.className = "business-card";
+      const businessId = business.business_id;
+      let cardContent = `<h3>${business.name}</h3>`;
+      if (business.city)
+        cardContent += `<p><strong>Thành phố:</strong> ${business.city}</p>`;
+      if (business.address)
+        cardContent += `<p><strong>Địa chỉ:</strong> ${business.address}</p>`;
+      if (business.stars)
+        cardContent += `<p><strong>Điểm sao:</strong> ${business.stars} ⭐</p>`;
+      if (business.review_count)
+        cardContent += `<p><strong>Số review:</strong> ${business.review_count}</p>`;
+      if (business.distance_km !== undefined)
+        cardContent += `<p><strong>Khoảng cách:</strong> ${business.distance_km} km</p>`;
+      card.innerHTML = cardContent;
+      if (businessId) {
+        card.addEventListener("click", () => {
+          selectedBusinessForAnalysis = business; // Lưu lại business được click
+          runAnalysisBtn.disabled = false; // Kích hoạt nút bấm
+
+          showBusinessDetails(business.business_id, business.name);
+        });
+      }
+      container.appendChild(card);
+    });
   }
 
   // --- CHỨC NĂNG 1: TÌM BUSINESS THEO CATEGORY ---
@@ -126,13 +165,11 @@ document.addEventListener("DOMContentLoaded", () => {
     showView("view-business-details");
     sidebar.classList.add("collapsed");
     detailsBusinessName.textContent = businessName;
-
     detailsPhotos.innerHTML = '<p class="loading-text">Đang tải ảnh...</p>';
     detailsReviews.innerHTML =
       '<p class="loading-text">Đang tải reviews...</p>';
     detailsTips.innerHTML = '<p class="loading-text">Đang tải tips...</p>';
     detailsTipsPagination.innerHTML = "";
-
     try {
       fetchAPI(`/api/businesses/${businessId}`).then(renderBusinessInfo);
       fetchAPI(`/api/businesses/${businessId}/photos`).then(renderPhotos);
@@ -219,24 +256,20 @@ document.addEventListener("DOMContentLoaded", () => {
     detailsTipsPagination.innerHTML = "";
     const totalPages = Math.ceil(total / limit);
     if (totalPages <= 1) return;
-
     const prevButton = document.createElement("button");
     prevButton.innerHTML = "&laquo; Trước";
     prevButton.disabled = page === 1;
     prevButton.addEventListener("click", () =>
       fetchAndRenderTips(businessId, page - 1)
     );
-
     const pageInfo = document.createElement("span");
     pageInfo.textContent = `Trang ${page} / ${totalPages}`;
-
     const nextButton = document.createElement("button");
     nextButton.innerHTML = "Sau &raquo;";
     nextButton.disabled = page === totalPages;
     nextButton.addEventListener("click", () =>
       fetchAndRenderTips(businessId, page + 1)
     );
-
     detailsTipsPagination.append(prevButton, pageInfo, nextButton);
   }
 
@@ -320,24 +353,76 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- CHỨC NĂNG 4: TÌM GẦN ĐÂY ---
   function initializeNearbyMap() {
     if (isNearbyMapInitialized) return;
+
+    const nearbyMapContainer = document.getElementById("nearby-map");
+    const nearbyResultsContainer = document.getElementById(
+      "nearby-results-container"
+    );
     const PhiladelphiaCoords = [39.953, -75.164];
+
+    let nearbyMarkers = [];
+
+    const blueIcon = new L.Icon({
+      iconUrl:
+        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+      shadowUrl:
+        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41],
+    });
+
+    const redIcon = new L.Icon({
+      iconUrl:
+        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+      shadowUrl:
+        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41],
+    });
+
     nearbyMap = L.map(nearbyMapContainer).setView(PhiladelphiaCoords, 12);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(nearbyMap);
+
     nearbyMap.on("click", async function (e) {
       const { lat, lng } = e.latlng;
       nearbyResultsContainer.innerHTML = "<h2>Đang tìm các địa điểm...</h2>";
+
+      nearbyMarkers.forEach((marker) => marker.remove());
+      nearbyMarkers = [];
+
+      const clickMarker = L.marker([lat, lng], { icon: blueIcon }).addTo(
+        nearbyMap
+      );
+      nearbyMarkers.push(clickMarker);
+
       try {
         const businesses = await fetchAPI(
           `/api/businesses/nearby?lat=${lat}&lon=${lng}`
         );
         renderBusinessResults(businesses, nearbyResultsContainer);
+
+        businesses.forEach((biz) => {
+          if (biz.latitude && biz.longitude) {
+            const bizMarker = L.marker([biz.latitude, biz.longitude], {
+              icon: redIcon,
+            })
+              .addTo(nearbyMap)
+              .bindPopup(`<b>${biz.name}</b><br>${biz.address}`);
+            nearbyMarkers.push(bizMarker);
+          }
+        });
       } catch (error) {
         nearbyResultsContainer.innerHTML =
           "<h2>Không tìm thấy địa điểm nào.</h2>";
       }
     });
+
     isNearbyMapInitialized = true;
   }
 
@@ -369,36 +454,27 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
-  function renderBusinessResults(businesses, container) {
-    container.innerHTML = "";
-    if (!businesses || businesses.length === 0) {
-      container.innerHTML = "<h2>Không tìm thấy kết quả nào.</h2>";
-      return;
-    }
-    businesses.forEach((business) => {
-      const card = document.createElement("div");
-      card.className = "business-card";
-      const businessId = business.business_id;
-      let cardContent = `<h3>${business.name}</h3>`;
-      if (business.city)
-        cardContent += `<p><strong>Thành phố:</strong> ${business.city}</p>`;
-      if (business.address)
-        cardContent += `<p><strong>Địa chỉ:</strong> ${business.address}</p>`;
-      if (business.stars)
-        cardContent += `<p><strong>Điểm sao:</strong> ${business.stars} ⭐</p>`;
-      if (business.review_count)
-        cardContent += `<p><strong>Số review:</strong> ${business.review_count}</p>`;
-      if (business.distance_km !== undefined)
-        cardContent += `<p><strong>Khoảng cách:</strong> ${business.distance_km} km</p>`;
-      card.innerHTML = cardContent;
-      if (businessId) {
-        card.addEventListener("click", () =>
-          showBusinessDetails(businessId, business.name)
-        );
-      }
-      container.appendChild(card);
-    });
-  }
+  //Thêm sự kiện click cho nút phân tích
+  runAnalysisBtn.addEventListener("click", async () => {
+    if (!selectedBusinessForAnalysis) return;
+
+    refTimeEl.textContent = "Đang đo...";
+    embTimeEl.textContent = "Đang đo...";
+
+    const businessId = selectedBusinessForAnalysis.business_id;
+
+    // Đo thời gian cho mô hình Tham chiếu
+    const startTimeRef = performance.now();
+    await fetchAPI(`/api/test/reviews-referenced/${businessId}`);
+    const durationRef = performance.now() - startTimeRef;
+    refTimeEl.textContent = `Thời gian: ${durationRef.toFixed(2)} ms`;
+
+    // Đo thời gian cho mô hình Lồng ghép
+    const startTimeEmb = performance.now();
+    await fetchAPI(`/api/test/reviews-embedded/${businessId}`);
+    const durationEmb = performance.now() - startTimeEmb;
+    embTimeEl.textContent = `Thời gian: ${durationEmb.toFixed(2)} ms`;
+  });
 
   // --- GẮN CÁC SỰ KIỆN ---
   searchBtn.addEventListener("click", () => searchBusinesses(1));

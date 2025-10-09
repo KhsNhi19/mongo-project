@@ -1,3 +1,5 @@
 Flask
 Flask-PyMongo
 flask-cors
+prometheus-flask-exporter
+prometheus-client

@@ -36,6 +36,12 @@
                 <span>Tìm Gần Đây</span></a
               >
             </li>
+            <li data-view="view-analysis">
+              <a href="#"
+                ><i class="fas fa-tachometer-alt"></i>
+                <span>Phân tích Model</span></a
+              >
+            </li>
           </ul>
         </nav>
       </aside>
@@ -146,6 +152,27 @@
             style="margin-top: 20px"
           ></div>
         </div>
+
+        <div id="view-analysis" class="view hidden">
+                <header class="main-header"> <h1>So sánh Hiệu năng Data Model</h1> </header>
+                <div class="search-container">
+                    <p>Tìm và click vào một business bất kỳ ở mục "Tìm Doanh nghiệp" để kích hoạt tính năng này.</p>
+                    <button id="run-analysis-btn" disabled>Chạy Phân tích cho Business đã chọn</button>
+                </div>
+                <div id="analysis-results" class="details-grid">
+                    <div class="details-info">
+                        <h3>Mô hình Tham chiếu (Referencing)</h3>
+                        <p id="ref-time">Thời gian: -- ms</p>
+                        <p><strong>Ưu điểm:</strong> Linh hoạt, dễ phân tích các collection con.</p>
+                    </div>
+                    <div class="details-info">
+                        <h3>Mô hình Lồng ghép (Embedding)</h3>
+                        <p id="emb-time">Thời gian: -- ms</p>
+                        <p><strong>Ưu điểm:</strong> Tốc độ đọc rất nhanh (chỉ 1 truy vấn).</p>
+                    </div>
+                </div>
+            </div>
+
       </main>
     </div>
 

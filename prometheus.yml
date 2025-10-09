@@ -1,0 +1,18 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["prometheus:9090"]
+
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"] # trỏ tới cổng node exporter
+  - job_name: "mongodb-exporter"
+    static_configs:
+      - targets: ["mongodb-exporter:9216"] # trỏ tới cổng mongodb exporter
+  - job_name: "flask_app"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["flask_app_project:5000"]

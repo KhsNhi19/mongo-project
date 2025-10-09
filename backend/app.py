@@ -4,15 +4,14 @@ from flask_pymongo import PyMongo
 from flask_cors import CORS
 from bson import json_util
 import json
+from prometheus_flask_exporter import PrometheusMetrics
 
 app = Flask(__name__)
-CORS(app) # Kích hoạt CORS cho tất cả các route
-
-# --- Cấu hình kết nối MongoDB ---
-app.config["MONGO_URI"] = "mongodb://mongo_demo:admin_123@mongodb:27017/yelp_db?authSource=admin"
+metrics = PrometheusMetrics(app, path='/metrics')
+CORS(app) 
+app.config["MONGO_URI"] = "mongodb://mongo_demo:admin_123@mongo1:27017,mongo2:27017,mongo3:27017/yelp_db?authSource=admin&replicaSet=rs0"
 mongo = PyMongo(app)
 
-# --- Route để phục vụ trang Frontend ---
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -21,7 +20,6 @@ def index():
 @app.route('/api/categories', methods=['GET'])
 def get_all_categories():
     pipeline = [
-        { "$addFields": { "categories_array": { "$split": ["$categories", ", "] } } },
         { "$unwind": "$categories_array" },
         { "$group": { "_id": "$categories_array", "count": { "$sum": 1 } } },
         { "$match": { "count": { "$gte": 50 } } },
@@ -35,38 +33,32 @@ def get_all_categories():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-# Lấy business theo một category người dùng chọn (ĐÃ GỘP LOGIC)
+# Lấy business theo một category người dùng chọn 
 @app.route('/api/businesses', methods=['GET'])
 def get_businesses_by_category():
     category = request.args.get('category', default='Restaurants', type=str)
     page = request.args.get('page', default=1, type=int)
     limit = 12 
     skip = (page - 1) * limit
-    query = { 'categories': { '$regex': category } }
-    pipeline = [
-        {
-            "$facet": {
-                "results": [
-                    { '$match': query },
-                    { '$sort': { 'review_count': -1 } },
-                    { '$skip': skip },
-                    { '$limit': limit },
-                    { '$project': { 'name': 1, 'city': 1, 'stars': 1, 'review_count': 1, 'business_id': 1 } }
-                ],
-                "totalCount": [
-                    { '$match': query },
-                    { '$count': 'count' }
-                ]
-            }
-        }
-    ]
+    query = { 'categories_array': category }
+
     try:
-        result = list(mongo.db.businesses.aggregate(pipeline))
-        businesses_list = result[0]['results']
-        total_count = result[0]['totalCount'][0]['count'] if result[0]['totalCount'] else 0
+        total_count = mongo.db.businesses.count_documents(query)
+        businesses_cursor = mongo.db.businesses.find(query).sort([('review_count', -1)]).skip(skip).limit(limit)
         
+        projected_businesses = []
+        for i in businesses_cursor:
+            projected_businesses.append({
+                "_id": i["_id"],
+                "name": i.get("name"),
+                "city": i.get("city"),
+                "stars": i.get("stars"),
+                "review_count": i.get("review_count"),
+                "business_id": i.get("business_id")
+            })
+
         response_data = {
-            "businesses": json.loads(json_util.dumps(businesses_list)),
+            "businesses": json.loads(json_util.dumps(projected_businesses)),
             "total": total_count,
             "page": page,
             "limit": limit
@@ -75,7 +67,7 @@ def get_businesses_by_category():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# --- CÁC API LẤY CHI TIẾT THEO BUSINESS_ID ---
+# Lấy chi tiết theo bussiness_id
 @app.route('/api/businesses/<string:business_id>', methods=['GET'])
 def get_business_details(business_id):
     try:
@@ -125,28 +117,15 @@ def get_business_tips(business_id):
     page = request.args.get('page', default=1, type=int)
     limit = 5  
     skip = (page - 1) * limit
-    pipeline = [
-        {
-            "$facet": {
-                "results": [
-                    { '$match': { 'business_id': business_id } },
-                    { '$sort': { 'compliment_count': -1 } },
-                    { '$skip': skip },
-                    { '$limit': limit }
-                ],
-                "totalCount": [
-                    { '$match': { 'business_id': business_id } },
-                    { '$count': 'count' }
-                ]
-            }
-        }
-    ]
+    
+    query = { 'business_id': business_id }
+
     try:
-        result = list(mongo.db.tips.aggregate(pipeline))
-        tips_list = result[0]['results']
-        total_count = result[0]['totalCount'][0]['count'] if result[0]['totalCount'] else 0
+        total_count = mongo.db.tips.count_documents(query)
+        tips_cursor = mongo.db.tips.find(query).sort([('compliment_count', -1)]).skip(skip).limit(limit)
+
         response_data = {
-            "tips": json.loads(json_util.dumps(tips_list)),
+            "tips": json.loads(json_util.dumps(list(tips_cursor))),
             "total": total_count,
             "page": page,
             "limit": limit
@@ -171,7 +150,7 @@ def get_business_checkins(business_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# --- CÁC API TÌM KIẾM NÂNG CAO ---
+# CÁC API TÌM KIẾM NÂNG CAO 
 
 # Text Search
 @app.route('/api/reviews/search', methods=['GET'])
@@ -214,7 +193,17 @@ def get_businesses_nearby():
             }
         },
         { "$limit": 12 },
-        { "$project": { "name": 1, "address": 1, "stars": 1, "city": 1, "review_count": 1, "distance_km": { "$round": [{ "$divide": ["$distance_meters", 1000] }, 2] }, "business_id": 1, "_id": 0 } }
+        { "$project": { 
+            "name": 1, 
+            "address": 1, 
+            "stars": 1, 
+            "city": 1, 
+            "review_count": 1, 
+            "distance_km": { "$round": [{ "$divide": ["$distance_meters", 1000] }, 2] }, 
+            "business_id": 1, 
+            "latitude": 1,
+            "longitude": 1,
+            "_id": 0 } }
     ]
     try:
         results_cursor = mongo.db.businesses.aggregate(pipeline)
@@ -223,6 +212,37 @@ def get_businesses_nearby():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# API Test cho mô hình Tham chiếu (Referencing)
+@app.route('/api/test/reviews-referenced/<string:business_id>', methods=['GET'])
+def test_referenced_reviews(business_id):
+    try:
+        reviews_cursor = mongo.db.reviews.find(
+            {'business_id': business_id}
+        ).sort([('date', -1)]).limit(5)
+        reviews_list = json.loads(json_util.dumps(list(reviews_cursor)))
+        return jsonify(reviews_list)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# API Test cho mô hình Lồng ghép (Embedding)
+@app.route('/api/test/reviews-embedded/<string:business_id>', methods=['GET'])
+def test_embedded_reviews(business_id):
+    try:
+        # Dùng $project và $slice để lấy 5 review mới nhất từ mảng
+        pipeline = [
+            { '$match': { 'business_id': business_id } },
+            { 
+                '$project': {
+                    'reviews': { '$slice': ['$reviews', -5] }
+                }
+            }
+        ]
+        result = list(mongo.db.businesses_embedded.aggregate(pipeline))
+        reviews_list = json.loads(json_util.dumps(result[0]['reviews'] if result else []))
+        return jsonify(reviews_list)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # --- Chạy ứng dụng ---
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)
