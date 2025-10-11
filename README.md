@@ -60,7 +60,7 @@ cd mongo-demo-project
 
 > **Lưu ý:** Ứng dụng này yêu cầu một file sao lưu database đã được tiền xử lý (`yelp_db_preprocessed.gz`).
 >
-> Data gốc: [Yelp_Dataset] (https://business.yelp.com/data/resources/open-dataset/)
+> **Data gốc:** [**Yelp_Dataset**](https://business.yelp.com/data/resources/open-dataset/)
 >
 > **Tải về tại:** [**Google Drive Link**](https://drive.google.com/file/d/1sIInaTIC0LpG8ZJQWOtMaxkQe-BKJrjr/view?usp=sharing)
 >
@@ -96,10 +96,12 @@ docker-compose up --build -d
     ```
 
 3.  **Khôi phục Database** từ file backup (chọn node Primary, thường là `mongo1` hoặc `mongo2`):
-    `bash
-docker cp ./yelp_db_preprocessed.gz mongo1_project:/tmp/backup.gz
-docker exec mongo1_project mongorestore --username mongo_demo --password admin_123 --authenticationDatabase admin --db yelp_db --archive=/tmp/backup.gz --gzip --drop
-`
+
+    ```bash
+    docker cp ./yelp_db_preprocessed.gz mongo1_project:/tmp/backup.gz
+    docker exec mongo1_project mongorestore --username mongo_demo --password admin_123 --authenticationDatabase admin --db yelp_db --archive=/tmp/backup.gz --gzip --drop
+    ```
+
     Sau vài phút, ứng dụng đã sẵn sàng để sử dụng.
 
 ### 3. Truy cập các Dịch vụ
@@ -130,6 +132,8 @@ Dự án này được cấp phép theo Giấy phép MIT. Xem file `LICENSE` đ�
 
 ## Tác giả & Liên hệ
 
-tranthikhanhnhi919@gmail.com
-nguyendongphuongvn@gmail.com
+tranthikhanhnhi919@gmail.com,
+
+nguyendongphuongvn@gmail.com,
+
 vongocghahan218@gmail.com
