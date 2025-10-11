@@ -21,10 +21,24 @@ def index():
 def get_all_categories():
     pipeline = [
         { "$unwind": "$categories_array" },
-        { "$group": { "_id": "$categories_array", "count": { "$sum": 1 } } },
-        { "$match": { "count": { "$gte": 50 } } },
-        { "$sort": { "_id": 1 } },
-        { "$project": { "category": "$_id", "_id": 0 } }
+        { "$group": { 
+            "_id": "$categories_array", 
+            "count": { 
+                "$sum": 1 
+                } 
+            } },
+        { "$match": { 
+            "count": { 
+                "$gte": 50 
+                } 
+                } },
+        { "$sort": { 
+            "_id": 1 
+            } },
+        { "$project": { 
+            "category": "$_id", 
+            "_id": 0 
+            } }
     ]
     try:
         categories_cursor = mongo.db.businesses.aggregate(pipeline)
@@ -83,7 +97,9 @@ def get_business_details(business_id):
 @app.route('/api/businesses/<string:business_id>/photos', methods=['GET'])
 def get_business_photos(business_id):
     pipeline = [
-        { '$match': { 'business_id': business_id } },
+        { '$match': { 
+            'business_id': business_id 
+            } },
         { '$limit': 10 }
     ]
     try:
@@ -97,12 +113,28 @@ def get_business_photos(business_id):
 @app.route('/api/businesses/<string:business_id>/reviews', methods=['GET'])
 def get_business_reviews(business_id):
     pipeline = [
-        { '$match': { 'business_id': business_id } },
-        { '$sort': { 'date': -1 } },
+        { '$match': { 
+            'business_id': business_id 
+            } },
+        { '$sort': { 
+            'date': -1 
+            } },
         { '$limit': 5 },
-        { '$lookup': { 'from': 'users', 'localField': 'user_id', 'foreignField': 'user_id', 'as': 'userInfo' } },
+        { '$lookup': { 
+            'from': 'users', 
+            'localField': 'user_id', 
+            'foreignField': 'user_id', 
+            'as': 'userInfo' 
+            } },
         { '$unwind': '$userInfo' },
-        { '$project': { 'stars': 1, 'text': 1, 'date': 1, 'userName': '$userInfo.name', '_id': 0 } }
+        { '$project': { 
+            'stars': 1, 
+            'text': 1, 
+            'date': 1, 
+            'userName': 
+            '$userInfo.name', 
+            '_id': 0 
+            } }
     ]
     try:
         reviews_cursor = mongo.db.reviews.aggregate(pipeline)
@@ -151,7 +183,6 @@ def get_business_checkins(business_id):
         return jsonify({"error": str(e)}), 500
 
 # CÁC API TÌM KIẾM NÂNG CAO 
-
 # Text Search
 @app.route('/api/reviews/search', methods=['GET'])
 def search_reviews():
@@ -212,30 +243,29 @@ def get_businesses_nearby():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# API Test cho mô hình Tham chiếu (Referencing)
+# API cho mô hình Tham chiếu (Referencing)
 @app.route('/api/test/reviews-referenced/<string:business_id>', methods=['GET'])
 def test_referenced_reviews(business_id):
     try:
         reviews_cursor = mongo.db.reviews.find(
-            {'business_id': business_id}
-        ).sort([('date', -1)]).limit(5)
+            {'business_id': business_id}).sort([('date', -1)]).limit(5)
         reviews_list = json.loads(json_util.dumps(list(reviews_cursor)))
         return jsonify(reviews_list)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# API Test cho mô hình Lồng ghép (Embedding)
+# API cho mô hình Lồng ghép (Embedding)
 @app.route('/api/test/reviews-embedded/<string:business_id>', methods=['GET'])
 def test_embedded_reviews(business_id):
     try:
         # Dùng $project và $slice để lấy 5 review mới nhất từ mảng
         pipeline = [
-            { '$match': { 'business_id': business_id } },
-            { 
-                '$project': {
-                    'reviews': { '$slice': ['$reviews', -5] }
-                }
-            }
+            { '$match': { 
+                'business_id': business_id 
+                } },
+            { '$project': {
+                'reviews': { '$slice': ['$reviews', -5] }
+                }}
         ]
         result = list(mongo.db.businesses_embedded.aggregate(pipeline))
         reviews_list = json.loads(json_util.dumps(result[0]['reviews'] if result else []))
